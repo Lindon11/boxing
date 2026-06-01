@@ -1,0 +1,74 @@
+{
+  "schema": "boxingdb.scrape.v1",
+  "scraped_at": "2026-06-02T00:00:00+00:00",
+  "fighters": [
+    {
+      "display_name": "Sample Scraper Fighter",
+      "country": "United Kingdom",
+      "stance": "Orthodox",
+      "weight_class": "Heavyweight",
+      "record": {
+        "wins": 10,
+        "losses": 0,
+        "draws": 0,
+        "no_contests": 0,
+        "knockouts": 8
+      }
+    },
+    {
+      "display_name": "Sample Opponent",
+      "country": "United States",
+      "stance": "Southpaw",
+      "weight_class": "Heavyweight",
+      "record": {
+        "wins": 9,
+        "losses": 1,
+        "draws": 0,
+        "no_contests": 0,
+        "knockouts": 5
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "Sample Scraped Fight Night",
+      "event_date": "2026-12-01 21:00:00",
+      "status": "upcoming",
+      "venue": {
+        "name": "Sample Arena",
+        "city": "London",
+        "country": "United Kingdom"
+      },
+      "promoter": {
+        "name": "Sample Promotions",
+        "country": "United Kingdom"
+      },
+      "fights": [
+        {
+          "red_corner": "Sample Scraper Fighter",
+          "blue_corner": "Sample Opponent",
+          "weight_class": "Heavyweight",
+          "billing": "main_event",
+          "bout_order": 1,
+          "scheduled_rounds": 12,
+          "is_title_fight": false,
+          "status": "scheduled"
+        }
+      ]
+    }
+  ],
+  "rankings": [
+    {
+      "organisation": "WBC",
+      "weight_class": "Heavyweight",
+      "ranked_on": "2026-06-02",
+      "entries": [
+        {
+          "rank": 15,
+          "fighter": "Sample Scraper Fighter",
+          "points": 100
+        }
+      ]
+    }
+  ]
+}

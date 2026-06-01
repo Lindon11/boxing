@@ -1,0 +1,66 @@
+{
+  "sources": [
+    {
+      "name": "Example Fighter Profile",
+      "kind": "fighter",
+      "url": "https://example.com/fighters/oleksandr-usyk",
+      "wait_for": "body",
+      "scroll": true,
+      "selectors": {
+        "display_name": "h1",
+        "photo_url": ".profile img@src",
+        "record": ".record",
+        "country": ".nationality",
+        "stance": ".stance",
+        "weight_class": ".division",
+        "height": ".height",
+        "reach": ".reach",
+        "bio": ".bio"
+      }
+    },
+    {
+      "name": "Example Fight Night",
+      "kind": "event",
+      "url": "https://example.com/events/usyk-vs-fury-2",
+      "wait_for": "body",
+      "status": "upcoming",
+      "selectors": {
+        "name": "h1",
+        "subtitle": ".event-subtitle",
+        "event_date": "time@datetime",
+        "poster_url": ".poster img@src",
+        "venue": ".venue",
+        "promoter": ".promoter",
+        "broadcast_notes": ".broadcast",
+        "fights": {
+          "rows": ".fight-card .fight-row",
+          "default_rounds": 12,
+          "fields": {
+            "red_corner": ".fighter-a .name",
+            "blue_corner": ".fighter-b .name",
+            "weight_class": ".weight-class",
+            "title": ".stakes",
+            "scheduled_rounds": ".rounds"
+          }
+        }
+      }
+    },
+    {
+      "name": "Example WBC Heavyweight Rankings",
+      "kind": "rankings",
+      "url": "https://example.com/rankings/wbc-heavyweight",
+      "organisation": "WBC",
+      "weight_class": "Heavyweight",
+      "selectors": {
+        "entries": {
+          "rows": "table.rankings tbody tr",
+          "fields": {
+            "rank": "td:nth-child(1)",
+            "fighter": "td:nth-child(2)",
+            "points": "td:nth-child(3)"
+          }
+        }
+      }
+    }
+  ]
+}
