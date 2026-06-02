@@ -1,11 +1,16 @@
 """
-Flashscore Boxing Scraper — Selenium scraper for fighter results.
+Flashscore Boxing Scraper — Full fighter profiles + results.
 
-Scrapes fighter pages to get full fight history:
-  date, opponent, result (W/L/D), method, rounds
+Scrapes:
+  - Fighter info (name, nationality, age, DOB)
+  - Fight results with titles, weight class, method, opponent
+  - Match detail (title, venue)
+  - Records (W/L/D/KO)
+
 Usage:
     python3 flashscore.py --player usyk-olexandr nqbF7L5K
-    python3 flashscore.py --file fighters.json --output data/
+    python3 flashscore.py --search "tyson fury"
+    python3 flashscore.py --batch fighters.json --output data/
 """
 
 import argparse, json, os, re, sys, time, requests
@@ -23,11 +28,20 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 
 BASE = "https://www.flashscore.co.uk"
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/120.0.0.0 Safari/537.36"
-)
+CHROME_PATHS = [
+    "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+]
+
+
+@dataclass
+class FighterInfo:
+    name: str
+    nationality: str
+    age: str
+    birth_date: str
+    flashscore_slug: str
+    flashscore_id: str
 
 
 @dataclass
@@ -36,25 +50,12 @@ class FightResult:
     opponent: str
     opponent_id: str
     result: str  # W, L, D
-    method: str  # KO, TKO, UD, SD, MD, PTS
-    rounds: str  # e.g. "12", "6"
-    title: str
+    method: str
+    title: str  # title stake (e.g. "WBC/WBO/IBF/IBO/WBA Super Titles")
+    weight_class: str  # e.g. "HEAVYWEIGHT - MEN"
     match_url: str
-    fighter_name: str
-
-
-RESULT_CLASS_MAP = {
-    "wcl-win": "W",
-    "wcl-lose": "L",
-    "wcl-draw": "D",
-}
-
-
-def extract_result(button_class: str) -> str:
-    for cls, result in RESULT_CLASS_MAP.items():
-        if cls in button_class:
-            return result
-    return ""
+    fighter_slug: str
+    fighter_id: str
 
 
 class BrowserManager:
@@ -64,18 +65,12 @@ class BrowserManager:
 
     def start(self):
         opts = Options()
-        chrome_paths = [
-            "/usr/bin/google-chrome",
-            "/usr/bin/google-chrome-stable",
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        ]
-        for p in chrome_paths:
+        for p in CHROME_PATHS:
             if os.path.exists(p):
                 opts.binary_location = p
                 break
         if self.headless:
             opts.add_argument("--headless=new")
-        opts.add_argument(f"user-agent={USER_AGENT}")
         opts.add_argument("--no-sandbox")
         opts.add_argument("--disable-dev-shm-usage")
         opts.add_argument("--disable-gpu")
@@ -94,12 +89,6 @@ class BrowserManager:
     def find_all(self, selector):
         return self.driver.find_elements(By.CSS_SELECTOR, selector)
 
-    def source(self):
-        return self.driver.page_source
-
-    def scroll_to(self, el):
-        self.driver.execute_script("arguments[0].scrollIntoView(true);", el)
-
     def click(self, el):
         self.driver.execute_script("arguments[0].click();", el)
 
@@ -108,50 +97,21 @@ class BrowserManager:
             self.driver.quit()
 
 
-def extract_opponent_id(match_url: str, fighter_slug: str) -> str:
-    """Extract opponent ID from match URL."""
-    # URL format: /match/boxing/{name}-{id}/{name}-{id}/
-    parts = match_url.rstrip("/").split("/")
-    for part in parts:
-        if "-" in part and fighter_slug not in part:
-            match = re.search(r"-([A-Za-z0-9]+)$", part)
-            if match:
-                return match.group(1)
+RESULT_CLASS_MAP = {"wcl-win": "W", "wcl-lose": "L", "wcl-draw": "D"}
+
+
+def extract_result(btn_class: str) -> str:
+    for cls, r in RESULT_CLASS_MAP.items():
+        if cls in btn_class:
+            return r
     return ""
 
 
-def search_player(browser: BrowserManager, query: str) -> list[dict]:
-    """Search for a fighter on Flashscore and return matches with their IDs."""
-    url = f"{BASE}/search/?q={requests.utils.quote(query)}"
-    browser.get(url)
-    time.sleep(4)
+def scrape_fighter(browser: BrowserManager, slug: str, pid: str) -> tuple[FighterInfo, list[FightResult]]:
+    """Scrape a fighter's profile page for info + full results with titles."""
+    url = f"{BASE}/player/{slug}/{pid}/"
+    print(f"  {url}")
 
-    try:
-        WebDriverWait(browser.driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/player/']"))
-        )
-    except TimeoutException:
-        pass
-
-    results = []
-    for link in browser.find_all("a[href*='/player/']"):
-        href = link.get_attribute("href") or ""
-        name = link.text.strip()
-        # Extract slug and ID from URL: /player/{slug}/{id}/
-        match = re.search(r"/player/([^/]+)/([^/?#]+)", href)
-        if match:
-            results.append({
-                "name": name or query,
-                "slug": match.group(1),
-                "id": match.group(2),
-                "url": href,
-            })
-    return results
-
-
-def scrape_player(browser: BrowserManager, player_slug: str, player_id: str, player_name: str = "") -> list[FightResult]:
-    url = f"{BASE}/player/{player_slug}/{player_id}/results/"
-    print(f"  Scraping: {url}")
     browser.get(url)
     time.sleep(4)
 
@@ -161,15 +121,39 @@ def scrape_player(browser: BrowserManager, player_slug: str, player_id: str, pla
         )
     except TimeoutException:
         print(f"  Warning: No matches loaded")
-        return []
+        return FighterInfo("", "", "", "", slug, pid), []
 
-    # Load all results by clicking "Show more matches"
-    for i in range(25):
+    # Scroll to load more results
+    for i in range(5):
+        browser.driver.execute_script("window.scrollBy(0, 600);")
+        time.sleep(0.5)
+
+    # Extract fighter info from header
+    info = FighterInfo("", "", "", "", slug, pid)
+    try:
+        header = browser.find("div[class*='playerPage__']").text
+        lines = [l.strip() for l in header.split("\n") if l.strip()]
+        for line in lines:
+            if "Age:" in line:
+                info.age = line.replace("Age:", "").strip()
+            m = re.search(r"(\d{2}\.\d{2}\.\d{4})", line)
+            if m:
+                info.birth_date = m.group(1)
+        # Name is first non-empty line
+        name_match = re.search(r"^([A-Za-zÀ-ÿ\s.]+)\s*\(([^)]+)\)", lines[0] if lines else "")
+        if name_match:
+            info.name = name_match.group(1).strip()
+            info.nationality = name_match.group(2).strip()
+    except Exception:
+        pass
+
+    # Scroll to load ALL results by clicking "Show more matches"
+    for i in range(30):
         try:
             more = browser.driver.find_element(By.CSS_SELECTOR, "a.event__more")
             if more and more.is_displayed():
                 browser.click(more)
-                time.sleep(2)
+                time.sleep(1.5)
             else:
                 break
         except (NoSuchElementException, TimeoutException):
@@ -179,44 +163,95 @@ def scrape_player(browser: BrowserManager, player_slug: str, player_id: str, pla
 
     matches = browser.find_all("div.event__match")
     fights = []
+    current_title = ""
+    current_weight = ""
 
     for match in matches:
         try:
+            # Check if this is a title/weight header row
+            text = match.text.strip()
+
             # Get match URL
-            link = match.find_element(By.CSS_SELECTOR, "a.eventRowLink")
-            match_url = link.get_attribute("href") or ""
+            try:
+                link = match.find_element(By.CSS_SELECTOR, "a.eventRowLink")
+                match_url = link.get_attribute("href") or ""
+            except:
+                match_url = ""
 
             # Date
-            date_el = match.find_element(By.CSS_SELECTOR, "div.event__time")
-            date = date_el.text.strip()
+            try:
+                date = match.find_element(By.CSS_SELECTOR, "div.event__time").text.strip()
+            except:
+                date = ""
 
-            # Other fighter (opponent)
-            away = match.find_element(By.CSS_SELECTOR, "div.event__awayParticipant")
-            opponent = away.text.strip()
+            # Home participant (the fighter whose page we're on)
+            try:
+                home = match.find_element(By.CSS_SELECTOR, "div.event__homeParticipant").text.strip()
+            except:
+                home = ""
+
+            # Away participant (opponent)
+            try:
+                away = match.find_element(By.CSS_SELECTOR, "div.event__awayParticipant").text.strip()
+            except:
+                away = ""
 
             # Method / rounds
-            rounds_el = match.find_element(By.CSS_SELECTOR, "div.event__rounds")
-            rounds_text = rounds_el.text.strip()
+            try:
+                method = match.find_element(By.CSS_SELECTOR, "div.event__rounds").text.strip()
+            except:
+                method = ""
 
-            # Result button
-            result_btn = match.find_element(By.CSS_SELECTOR, "button.formIcon__lastMatches")
-            btn_class = result_btn.get_attribute("class") or ""
-            result = extract_result(btn_class)
+            # Result badge
+            try:
+                btn = match.find_element(By.CSS_SELECTOR, "button.formIcon__lastMatches")
+                result = extract_result(btn.get_attribute("class") or "")
+            except:
+                result = ""
 
-            opp_id = extract_opponent_id(match_url, player_slug)
+            # Extract opponent ID from match URL
+            opp_id = ""
+            if match_url:
+                parts = match_url.rstrip("/").split("/")
+                for part in parts:
+                    if "-" in part and slug not in part:
+                        m = re.search(r"-([A-Za-z0-9]+)$", part)
+                        if m:
+                            opp_id = m.group(1)
+
+            # Track title/weight from header rows (divs with specific pattern)
+            if not match_url and not date and not home:
+                if any(kw in text.upper() for kw in ["TITLE", "WORLD", "BELT", "CHAMPION"]):
+                    current_title = text.strip()
+                elif any(kw in text.upper() for kw in ["HEAVYWEIGHT", "LIGHT", "WELTER", "MIDDLE", "FEATHER", "BANTAM", "FLY", "CRUISER"]):
+                    current_weight = text.strip()
+
+            if not match_url:
+                # Check if this is a header/title row
+                if text and not any(c.isdigit() for c in text[:5]):
+                    if any(kw in text.upper() for kw in ["TITLE", "CHAMPIONSHIP", "BELT", "WORLD"]):
+                        current_title = text.strip()
+                    elif any(kw in text.upper() for kw in ["HEAVYWEIGHT", "LIGHT", "WELTER", "MIDDLE", "FEATHER"]):
+                        current_weight = text.strip()
+                continue
+
+            if not home:
+                continue
 
             fights.append(FightResult(
                 date=date,
-                opponent=opponent,
+                opponent=away,
                 opponent_id=opp_id,
                 result=result,
-                method=rounds_text,
-                rounds="",
-                title="",
+                method=method,
+                title=current_title,
+                weight_class=current_weight,
                 match_url=match_url,
-                fighter_name=player_name or f"{player_slug}/{player_id}",
+                fighter_slug=slug,
+                fighter_id=pid,
             ))
-        except Exception as e:
+
+        except Exception:
             continue
 
     # Calculate record
@@ -224,73 +259,98 @@ def scrape_player(browser: BrowserManager, player_slug: str, player_id: str, pla
     losses = sum(1 for f in fights if f.result == "L")
     draws = sum(1 for f in fights if f.result == "D")
     kos = sum(1 for f in fights if "KO" in f.method or "TKO" in f.method)
+    print(f"  {info.name or slug}: {len(fights)} fights ({wins}-{losses}-{draws}, {kos} KO)")
 
-    print(f"  Found {len(fights)} fights (W:{wins} L:{losses} D:{draws} KO:{kos})")
-    return fights
+    return info, fights
+
+
+def search_player(browser, query):
+    """Search Flashscore for a player. Returns list of {name, slug, id}."""
+    browser.get(f"{BASE}/search/?q={requests.utils.quote(query)}")
+    time.sleep(5)
+    try:
+        browser.find("a[href*='/player/']")
+    except:
+        pass
+    results = []
+    for link in browser.find_all("a[href*='/player/']"):
+        href = link.get_attribute("href") or ""
+        m = re.search(r"/player/([^/]+)/([^/?#]+)", href)
+        if m:
+            results.append({"name": link.text.strip() or query, "slug": m.group(1), "id": m.group(2), "url": href})
+    return results
 
 
 def main():
     parser = argparse.ArgumentParser(description="Flashscore Boxing Scraper")
-    parser.add_argument("--player", nargs=2, metavar=("SLUG", "ID"),
-                        help="Player slug and Flashscore ID (e.g. usyk-olexandr nqbF7L5K)")
-    parser.add_argument("--search", metavar="NAME", help="Search for a fighter by name")
-    parser.add_argument("--file", help="JSON file with fighters containing flashscore_id fields")
-    parser.add_argument("--output", default="data/", help="Output directory")
-    parser.add_argument("--no-headless", action="store_true", help="Show browser window")
+    parser.add_argument("--player", nargs=2, metavar=("SLUG", "ID"))
+    parser.add_argument("--search", metavar="NAME")
+    parser.add_argument("--batch", help="JSON file with [{flashscore_slug, flashscore_id}]")
+    parser.add_argument("--output", default="data/")
+    parser.add_argument("--no-headless", action="store_true")
     args = parser.parse_args()
 
-    if not args.player and not args.file and not args.search:
+    if not args.player and not args.search and not args.batch:
         parser.print_help()
         sys.exit(1)
 
     os.makedirs(args.output, exist_ok=True)
     all_fights = []
+    all_fighters = []
+
     browser = BrowserManager(headless=not args.no_headless)
     browser.start()
 
     try:
         if args.search:
             results = search_player(browser, args.search)
-            print(f"\nFound {len(results)} player(s) for '{args.search}':")
+            print(f"\nFound {len(results)} player(s):")
             for r in results:
-                print(f"  {r['name']:40s} | slug={r['slug']:30s} id={r['id']}")
-            if results:
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                p = os.path.join(args.output, f"search_{ts}.json")
-                json.dump(results, open(p, "w"), indent=2)
-                print(f"Saved to {p}")
+                print(f"  {r['name']:40s} slug={r['slug']:30s} id={r['id']}")
 
         if args.player:
             slug, pid = args.player
-            fights = scrape_player(browser, slug, pid, slug)
+            info, fights = scrape_fighter(browser, slug, pid)
+            all_fighters.append(info)
             all_fights.extend(fights)
 
-        if args.file:
-            fighters = json.load(open(args.file))
+        if args.batch:
+            fighters = json.load(open(args.batch))
             for f in fighters:
-                fs_id = f.get("flashscore_id") or f.get("source_id")
-                if not fs_id:
+                slug = f.get("flashscore_slug", "")
+                pid = f.get("flashscore_id", "")
+                if not slug or not pid:
                     continue
-                name = f.get("display_name", "")
-                slug = f.get("slug", name.lower().replace(" ", "-"))
-                fights = scrape_player(browser, slug, fs_id, name)
+                info, fights = scrape_fighter(browser, slug, pid)
+                if info.name:
+                    all_fighters.append(info)
                 all_fights.extend(fights)
                 time.sleep(2)
 
     finally:
         browser.close()
 
+    # Save results
     if all_fights:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = os.path.join(args.output, f"flashscore_results_{ts}.json")
+        path = os.path.join(args.output, f"flashscore_fights_{ts}.json")
         with open(path, "w") as f:
             json.dump([asdict(fi) for fi in all_fights], f, indent=2)
-        print(f"\nTotal: {len(all_fights)} fights saved to {path}")
+        print(f"\nFights saved: {len(all_fights)} to {path}")
+
+    if all_fighters:
+        fpath = os.path.join(args.output, f"flashscore_fighters_{ts}.json")
+        with open(fpath, "w") as f:
+            json.dump([asdict(fi) for fi in all_fighters], f, indent=2)
+        print(f"Fighters saved: {len(all_fighters)} to {fpath}")
+
+    # Summary
+    if all_fights:
         total_w = sum(1 for f in all_fights if f.result == "W")
         total_l = sum(1 for f in all_fights if f.result == "L")
         total_d = sum(1 for f in all_fights if f.result == "D")
         total_ko = sum(1 for f in all_fights if "KO" in f.method or "TKO" in f.method)
-        print(f"Record: {total_w}-{total_l}-{total_d} ({total_ko} KO)")
+        print(f"Overall: {total_w}-{total_l}-{total_d} ({total_ko} KO)")
 
 
 if __name__ == "__main__":
