@@ -388,9 +388,9 @@ const resources = {
   ], [{ key: 'abbreviation', label: 'Abbr', badge: true }, { key: 'name', label: 'Name' }, { key: 'logo_url', label: 'Logo' }]),
   belts: simpleResource('Belts', 'Belt', 'Manage titles, current champions, and active reigns.', [
     selectField('organisation_id', 'Organisation', 'organisations'), selectField('weight_class_id', 'Weight Class', 'weight_classes'),
-    field('name', 'Name'), field('slug', 'Slug'), checkboxField('active', 'Active'),
+    field('name', 'Name'), field('slug', 'Slug'), field('logo_url', 'Logo URL', 'url'), checkboxField('active', 'Active'),
     selectField('current_champion_id', 'Current Champion', 'fighters'), field('reign_started_on', 'Reign Started', 'date'), field('reign_result', 'Reign Note'),
-  ], [{ key: 'organisation.abbreviation', label: 'Org', badge: true }, { key: 'weight_class.name', label: 'Weight' }, { key: 'name', label: 'Title' }, { key: 'current_reign.0.fighter.display_name', label: 'Champion' }], { active: true }),
+  ], [{ key: 'logo_url', label: 'Logo' }, { key: 'organisation.abbreviation', label: 'Org', badge: true }, { key: 'weight_class.name', label: 'Weight' }, { key: 'name', label: 'Title' }, { key: 'current_reign.0.fighter.display_name', label: 'Champion' }], { active: true }),
   'belt-history': simpleResource('Belt History', 'Belt History Entry', 'Manage current, former, and vacated title reigns.', [
     selectField('belt_id', 'Belt', 'belts'), selectField('fighter_id', 'Champion', 'fighters'), selectField('event_id', 'Event', 'events'),
     selectField('fight_id', 'Fight', 'fights'), field('reign_started_on', 'Started', 'date'), field('reign_ended_on', 'Ended', 'date'),
