@@ -128,7 +128,7 @@ def run(storage_dir, output_dir):
 
     path = os.path.join(output_dir, "fighters.json")
     with open(path, "w") as f:
-        json.dump(all_fighters, f, indent=2)
+        json.dump({"fighters": all_fighters}, f, indent=2)
 
     print(f"\n{'='*50}")
     print(f"Total: {len(all_fighters)} fighters")
