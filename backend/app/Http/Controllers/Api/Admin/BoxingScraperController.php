@@ -145,7 +145,7 @@ class BoxingScraperController extends Controller
         File::ensureDirectoryExists($outputDir);
 
         $command = [
-            'python3', $script,
+            'python3', '-W', 'ignore', $script,
             '--storage', $storageDir,
             '--output', $outputDir,
         ];
