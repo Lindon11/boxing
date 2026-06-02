@@ -227,8 +227,14 @@ class BoxingScraperController extends Controller
 
     private function pythonStatus(): array
     {
-        $process = new Process([$this->pythonBinary(), '-c', 'import selenium, bs4, lxml, dateutil; print("scraper dependencies installed")'], base_path('tools/boxingdb_scraper'));
-        $process->setTimeout(20);
+        $syncScript = base_path('boxing-scraper/sync.py');
+        $checks = ['requests'];
+        if (is_file($syncScript)) {
+            $checks[] = 'sync.py ready';
+        }
+
+        $process = new Process(['python3', '-c', 'import requests; print("TheSportsDB API sync ready")']);
+        $process->setTimeout(10);
         $process->run();
 
         return [
@@ -236,6 +242,7 @@ class BoxingScraperController extends Controller
             'message' => $process->isSuccessful()
                 ? trim($process->getOutput())
                 : trim($process->getErrorOutput() ?: $process->getOutput()),
+            'sync_script' => is_file($syncScript),
         ];
     }
 
