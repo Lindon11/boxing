@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-6">
-    <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
+    <div class="admin-panel p-5">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p class="text-sm font-semibold text-amber-400">BoxingDB Admin</p>
-          <h1 class="text-2xl font-bold text-white mt-1">{{ config.label }}</h1>
+          <p class="text-xs font-black uppercase tracking-[0.22em] text-red-400">BoxingDB Admin</p>
+          <h1 class="text-3xl font-black text-white mt-1">{{ config.label }}</h1>
           <p class="text-sm text-slate-400 mt-1">{{ config.description }}</p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -14,12 +14,12 @@
               v-model="search"
               type="text"
               :placeholder="`Search ${config.label.toLowerCase()}...`"
-              class="w-full sm:w-80 pl-10 pr-4 py-3 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              class="admin-control w-full sm:w-80 pl-10 pr-4 py-3 placeholder-slate-500"
               @input="queueLoad"
             >
           </div>
           <button
-            class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg shadow-amber-500/20"
+            class="admin-primary px-4 py-3"
             @click="openCreate"
           >
             <PlusIcon class="w-5 h-5" />
@@ -29,9 +29,21 @@
       </div>
     </div>
 
-    <div v-if="loading" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-8">
+    <nav class="flex gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/55 p-2">
+      <RouterLink
+        v-for="tab in resourceTabs"
+        :key="tab.key"
+        :to="`/boxingdb/${tab.key}`"
+        class="shrink-0 rounded-lg px-3 py-2 text-sm font-bold transition"
+        :class="resource === tab.key ? 'bg-red-600 text-white shadow-lg shadow-red-950/30' : 'text-slate-400 hover:bg-slate-800/70 hover:text-white'"
+      >
+        {{ tab.label }}
+      </RouterLink>
+    </nav>
+
+    <div v-if="loading" class="admin-panel p-8">
       <div class="flex items-center justify-center gap-3 text-slate-400">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         Loading {{ config.label.toLowerCase() }}...
       </div>
     </div>
@@ -45,32 +57,45 @@
       </div>
     </div>
 
-    <div v-else class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 overflow-hidden">
+    <div v-else class="admin-panel overflow-hidden">
+      <div class="flex flex-col gap-3 border-b border-slate-800 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm font-bold text-white">{{ config.label }} Records</p>
+          <p class="text-xs text-slate-500">{{ pagination?.total || items.length }} total items</p>
+        </div>
+        <span class="w-max rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-xs font-bold uppercase text-red-300">{{ config.singular }} data</span>
+      </div>
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-slate-900/70 border-b border-slate-700/60">
+        <table class="admin-table">
+          <thead>
             <tr>
-              <th v-for="column in config.columns" :key="column.key" class="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-400">
+              <th v-for="column in config.columns" :key="column.key">
                 {{ column.label }}
               </th>
-              <th class="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide text-slate-400">Actions</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-700/50">
-            <tr v-for="item in items" :key="item.id" class="hover:bg-slate-700/25 transition-colors">
-              <td v-for="column in config.columns" :key="column.key" class="px-5 py-4 text-sm text-slate-300 align-top">
-                <span v-if="column.badge" class="inline-flex px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 text-xs font-bold">
+          <tbody>
+            <tr v-for="item in items" :key="item.id">
+              <td v-for="(column, columnIndex) in config.columns" :key="column.key">
+                <img
+                  v-if="column.key === 'photo_url' && item.photo_url"
+                  :src="item.photo_url"
+                  alt=""
+                  class="h-12 w-12 rounded-lg object-cover ring-1 ring-white/10"
+                >
+                <span v-else-if="column.badge" class="inline-flex rounded-md bg-red-500/12 px-2 py-1 text-xs font-black text-red-300 ring-1 ring-red-500/25">
                   {{ displayValue(item, column) }}
                 </span>
-                <span v-else>{{ displayValue(item, column) }}</span>
+                <span v-else :class="columnIndex === 0 ? 'font-bold text-white' : ''">{{ displayValue(item, column) }}</span>
               </td>
-              <td class="px-5 py-4">
+              <td>
                 <div class="flex items-center justify-end gap-2">
-                  <button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 hover:bg-amber-500/25" @click="openEdit(item)">
-                    Edit
+                  <button class="inline-flex size-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 text-slate-300 transition hover:border-red-500/50 hover:text-white" title="Edit" @click="openEdit(item)">
+                    <PencilSquareIcon class="h-4 w-4" />
                   </button>
-                  <button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/15 text-red-300 hover:bg-red-500/25" @click="deleteItem(item)">
-                    Delete
+                  <button class="inline-flex size-9 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-300 transition hover:bg-red-500/20" title="Delete" @click="deleteItem(item)">
+                    <TrashIcon class="h-4 w-4" />
                   </button>
                 </div>
               </td>
@@ -99,10 +124,11 @@
     <div v-if="modalOpen" class="fixed inset-0 z-[80] overflow-y-auto">
       <div class="min-h-screen p-4 flex items-start justify-center lg:items-center">
         <button class="fixed inset-0 bg-black/70 backdrop-blur-sm" type="button" @click="closeModal" />
-        <form class="relative w-full max-w-6xl rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden" @submit.prevent="saveItem">
-          <div class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-700 bg-slate-900/95 p-5">
+        <form class="relative w-full max-w-6xl overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl" @submit.prevent="saveItem">
+          <div class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/95 p-5">
             <div>
-              <h2 class="text-xl font-bold text-white">{{ editingItem ? 'Edit' : 'Create' }} {{ config.singular }}</h2>
+              <p class="text-xs font-black uppercase tracking-[0.2em] text-red-400">{{ config.label }}</p>
+              <h2 class="mt-1 text-xl font-black text-white">{{ editingItem ? 'Edit' : 'Create' }} {{ config.singular }}</h2>
               <p class="text-sm text-slate-400">Required fields are validated by the Laravel admin API.</p>
             </div>
             <button class="text-slate-400 hover:text-white" type="button" @click="closeModal">
@@ -144,8 +170,8 @@
                   </option>
                 </select>
 
-                <label v-else-if="field.type === 'checkbox'" class="flex items-center gap-3 h-12 px-4 rounded-xl bg-slate-950/50 border border-slate-700/60">
-                  <input v-model="form[field.key]" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500">
+                <label v-else-if="field.type === 'checkbox'" class="flex items-center gap-3 h-12 px-4 rounded-lg bg-slate-950/70 border border-slate-700/70">
+                  <input v-model="form[field.key]" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-red-600">
                   <span class="text-sm text-slate-300">{{ field.help || 'Enabled' }}</span>
                 </label>
 
@@ -159,19 +185,19 @@
               </div>
             </div>
 
-            <section v-if="resource === 'events'" class="rounded-2xl border border-slate-700/60 bg-slate-950/40 p-4">
+            <section v-if="resource === 'events'" class="rounded-xl border border-slate-700/70 bg-slate-950/60 p-4">
               <div class="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <h3 class="text-lg font-bold text-white">Fight Card</h3>
                   <p class="text-sm text-slate-400">Add, edit, or reorder bouts for this event.</p>
                 </div>
-                <button type="button" class="px-3 py-2 rounded-xl bg-amber-500/15 text-amber-300 text-sm font-semibold hover:bg-amber-500/25" @click="addFightRow">
+                <button type="button" class="admin-secondary px-3 py-2 text-sm font-semibold" @click="addFightRow">
                   Add Bout
                 </button>
               </div>
 
               <div class="space-y-3">
-                <div v-for="(fight, index) in eventFights" :key="fight.local_key" class="rounded-xl border border-slate-700/60 bg-slate-900/80 p-4">
+                <div v-for="(fight, index) in eventFights" :key="fight.local_key" class="rounded-xl border border-slate-700/70 bg-slate-900/80 p-4">
                   <div class="flex items-center justify-between gap-3 mb-4">
                     <p class="font-semibold text-white">Bout {{ index + 1 }}</p>
                     <button type="button" class="text-sm text-red-300 hover:text-red-200" @click="removeFightRow(index)">Remove</button>
@@ -189,8 +215,8 @@
                     <AdminInput v-model="fight.scheduled_rounds" label="Rounds" type="number" />
                     <AdminInput v-model="fight.completed_rounds" label="Result Round" type="number" />
                     <AdminInput v-model="fight.result_time" label="Result Time" placeholder="1:23" />
-                    <label class="flex items-center gap-3 h-12 px-4 rounded-xl bg-slate-950/50 border border-slate-700/60">
-                      <input v-model="fight.is_title_fight" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-500">
+                    <label class="flex items-center gap-3 h-12 px-4 rounded-lg bg-slate-950/70 border border-slate-700/70">
+                      <input v-model="fight.is_title_fight" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-red-600">
                       <span class="text-sm text-slate-300">Title fight</span>
                     </label>
                     <div class="md:col-span-2 xl:col-span-3">
@@ -203,11 +229,11 @@
             </section>
           </div>
 
-          <div class="sticky bottom-0 flex items-center justify-end gap-3 border-t border-slate-700 bg-slate-900/95 p-5">
-            <button type="button" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700" @click="closeModal">
+          <div class="sticky bottom-0 flex items-center justify-end gap-3 border-t border-slate-800 bg-slate-950/95 p-5">
+            <button type="button" class="admin-secondary px-4 py-2.5" @click="closeModal">
               Cancel
             </button>
-            <button type="submit" :disabled="saving" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold hover:from-amber-600 hover:to-orange-700 disabled:opacity-60">
+            <button type="submit" :disabled="saving" class="admin-primary px-5 py-2.5 disabled:opacity-60">
               {{ saving ? 'Saving...' : 'Save' }}
             </button>
           </div>
@@ -219,10 +245,12 @@
 
 <script setup>
 import { computed, defineComponent, h, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import {
   MagnifyingGlassIcon,
+  PencilSquareIcon,
   PlusIcon,
+  TrashIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import api from '@/services/api'
@@ -289,11 +317,13 @@ const resources = {
     singular: 'Fighter',
     description: 'Manage boxer profiles, records, photos, stance, country, and biography.',
     columns: [
+      { key: 'photo_url', label: 'Photo' },
       { key: 'display_name', label: 'Name' },
       { key: 'country.code', label: 'Country', badge: true },
       { key: 'weight_class.name', label: 'Weight' },
-      { key: 'record', label: 'Record' },
-      { key: 'knockouts', label: 'KOs' },
+      { key: 'wins', label: 'W' },
+      { key: 'losses', label: 'L' },
+      { key: 'knockouts', label: 'KO' },
     ],
     fields: [
       field('first_name', 'First Name'), field('last_name', 'Last Name'), field('display_name', 'Display Name'),
@@ -384,6 +414,10 @@ const resources = {
 }
 
 const config = computed(() => resources[resource.value] || resources.fighters)
+const resourceTabs = computed(() => Object.entries(resources).map(([key, value]) => ({
+  key,
+  label: value.label,
+})))
 
 const selectOptions = computed(() => ({
   countries: makeOptions(options.value.countries, 'name'),
@@ -644,10 +678,26 @@ onMounted(async () => {
 
 <style scoped>
 .form-control {
-  @apply w-full px-4 py-3 bg-slate-950/50 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all;
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(51 65 85 / 0.9);
+  background: rgb(2 6 23 / 0.78);
+  padding: 0.75rem 1rem;
+  color: white;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.form-control::placeholder {
+  color: rgb(100 116 139);
+}
+
+.form-control:focus {
+  border-color: rgb(239 68 68 / 0.78);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.16);
 }
 
 .pager-btn {
-  @apply px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors;
+  @apply px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-700 bg-slate-950/70 text-slate-300 hover:border-red-500/50 hover:text-white disabled:bg-slate-900 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors;
 }
 </style>
