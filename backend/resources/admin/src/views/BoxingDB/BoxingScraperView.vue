@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <section class="rounded-2xl border border-slate-700/60 bg-slate-900/80 p-5 shadow-xl shadow-black/20">
+    <section class="admin-panel p-5">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.24em] text-red-400">BoxingDB Automation</p>
@@ -10,13 +10,13 @@
           </p>
         </div>
         <div class="grid gap-2 sm:grid-cols-2 xl:min-w-[460px]">
-          <div class="rounded-xl border border-slate-700/60 bg-slate-950/70 p-3">
+          <div class="rounded-lg border border-slate-700/70 bg-slate-950/70 p-3">
             <p class="text-xs uppercase tracking-wide text-slate-500">Python CLI</p>
             <p :class="['mt-1 text-sm font-semibold', status?.python?.ok ? 'text-emerald-300' : 'text-red-300']">
               {{ status?.python?.ok ? 'Ready' : 'Needs setup' }}
             </p>
           </div>
-          <div class="rounded-xl border border-slate-700/60 bg-slate-950/70 p-3">
+          <div class="rounded-lg border border-slate-700/70 bg-slate-950/70 p-3">
             <p class="text-xs uppercase tracking-wide text-slate-500">Latest Imports</p>
             <p class="mt-1 text-sm font-semibold text-white">{{ status?.latest_imports?.length || 0 }} files</p>
           </div>
@@ -24,13 +24,12 @@
       </div>
 
       <div v-if="status?.python && !status.python.ok" class="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-        <p class="font-semibold">Python scraper dependencies are not ready.</p>
-        <pre class="mt-2 whitespace-pre-wrap text-xs text-amber-100/80">{{ status.python.message }}</pre>
+        <p class="font-semibold">Selenium scraper not configured (not needed — using TheSportsDB API).</p>
       </div>
     </section>
 
     <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div class="rounded-2xl border border-slate-700/60 bg-slate-900/80 shadow-xl shadow-black/20">
+      <div class="admin-panel">
         <div class="flex flex-col gap-3 border-b border-slate-700/60 p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 class="text-lg font-semibold text-white">Source Configuration</h2>
@@ -39,14 +38,14 @@
           <div class="flex flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800"
+              class="admin-secondary px-3 py-2 text-sm font-medium"
               @click="loadTemplate"
             >
               Load Template
             </button>
             <button
               type="button"
-              class="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-800"
+              class="admin-secondary px-3 py-2 text-sm font-medium"
               @click="formatSources"
             >
               Format JSON
@@ -58,7 +57,7 @@
           <textarea
             v-model="sourcesJson"
             spellcheck="false"
-            class="min-h-[420px] w-full rounded-xl border border-slate-700 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            class="min-h-[420px] w-full rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
           />
 
           <div class="grid gap-3 lg:grid-cols-4">
@@ -101,7 +100,7 @@
           <div class="flex flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-red-950/30 hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              class="admin-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="collecting"
               @click="collect"
             >
@@ -117,7 +116,7 @@
             </button>
             <button
               type="button"
-              class="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              class="admin-secondary px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="importing || !lastOutputPath"
               @click="importLatest(false)"
             >
@@ -128,15 +127,41 @@
       </div>
 
       <aside class="space-y-6">
-        <div class="rounded-2xl border border-slate-700/60 bg-slate-900/80 p-4 shadow-xl shadow-black/20">
-          <h2 class="text-lg font-semibold text-white">Automation</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-400">
-            Scheduled scraping is handled by Laravel. Create a real source file, then enable the env flags below.
-          </p>
-          <pre class="mt-4 overflow-x-auto rounded-xl border border-slate-700 bg-slate-950 p-3 text-xs leading-5 text-slate-200">{{ automationSnippet }}</pre>
+        <div class="admin-panel p-4">
+          <div class="flex items-center gap-3">
+            <div class="flex size-10 items-center justify-center rounded-xl bg-red-600/20 text-red-400">
+              <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">TheSportsDB Sync</h2>
+              <p class="text-sm text-slate-400">Pull fighters + images from your paid API key</p>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+              <p class="text-slate-500">Weight Classes</p>
+              <p class="text-lg font-bold text-white">8</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+              <p class="text-slate-500">Total Fighters</p>
+              <p class="text-lg font-bold text-white">115</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+              <p class="text-slate-500">Image Types</p>
+              <p class="text-lg font-bold text-white">9</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="mt-4 w-full rounded-xl bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-950/30 transition hover:from-red-500 hover:to-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="syncing"
+            @click="syncThesportsdb"
+          >
+            {{ syncing ? 'Syncing...' : 'Sync TheSportsDB Now' }}
+          </button>
         </div>
 
-        <div class="rounded-2xl border border-slate-700/60 bg-slate-900/80 p-4 shadow-xl shadow-black/20">
+        <div class="admin-panel p-4">
           <h2 class="text-lg font-semibold text-white">Latest Files</h2>
           <div class="mt-4 space-y-3">
             <button
@@ -157,7 +182,7 @@
       </aside>
     </section>
 
-    <section v-if="result" class="rounded-2xl border border-slate-700/60 bg-slate-900/80 p-4 shadow-xl shadow-black/20">
+    <section v-if="result" class="admin-panel p-4">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 class="text-lg font-semibold text-white">Last Run</h2>
@@ -194,6 +219,7 @@ const result = ref(null)
 const lastOutputPath = ref('')
 const collecting = ref(false)
 const importing = ref(false)
+const syncing = ref(false)
 
 const form = reactive({
   browser: 'chrome',
@@ -293,6 +319,22 @@ async function importLatest(dryRun) {
     toast.error(error.response?.data?.message || 'Import failed.')
   } finally {
     importing.value = false
+  }
+}
+
+async function syncThesportsdb() {
+  syncing.value = true
+  result.value = null
+  try {
+    const response = await api.post('/admin/boxingdb/scraper/sync-thesportsdb')
+    result.value = response.data
+    toast.success('TheSportsDB sync completed.')
+    await refresh()
+  } catch (error) {
+    result.value = error.response?.data || { ok: false, stderr: error.message }
+    toast.error(error.response?.data?.message || 'TheSportsDB sync failed.')
+  } finally {
+    syncing.value = false
   }
 }
 

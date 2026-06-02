@@ -350,6 +350,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/status', 'status');
                 Route::post('/collect', 'collect');
                 Route::post('/import', 'import');
+                Route::post('/sync-thesportsdb', 'syncThesportsdb');
             });
 
             Route::prefix('boxingdb')->controller(BoxingAdminController::class)->group(function () {

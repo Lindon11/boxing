@@ -130,6 +130,50 @@ class BoxingScraperController extends Controller
         return response()->json($payload, $process->isSuccessful() ? 200 : 422);
     }
 
+    public function syncThesportsdb(): JsonResponse
+    {
+        $scraperDir = base_path('boxing-scraper');
+        $storageDir = storage_path('app/public/fighters');
+        $outputDir = $scraperDir . '/data';
+        $script = $scraperDir . '/sync.py';
+
+        if (! is_file($script)) {
+            return response()->json(['ok' => false, 'message' => 'sync.py not found at ' . $script], 422);
+        }
+
+        File::ensureDirectoryExists($storageDir);
+        File::ensureDirectoryExists($outputDir);
+
+        $command = [
+            'python3', $script,
+            '--storage', $storageDir,
+            '--output', $outputDir,
+        ];
+
+        $process = new Process($command, $scraperDir);
+        $process->setTimeout(300);
+        $process->run();
+
+        $payload = [
+            'ok' => $process->isSuccessful(),
+            'exit_code' => $process->getExitCode(),
+            'stdout' => trim($process->getOutput()),
+            'stderr' => trim($process->getErrorOutput()),
+            'data_path' => $outputDir . '/fighters.json',
+        ];
+
+        if ($process->isSuccessful() && is_file($outputDir . '/fighters.json')) {
+            $data = json_decode((string) file_get_contents($outputDir . '/fighters.json'), true);
+            $payload['summary'] = [
+                'fighters' => is_array($data) ? count($data) : 0,
+                'weight_classes' => 8,
+                'images_downloaded' => is_array($data) ? count(array_filter(array_column($data, 'photo_url'))) : 0,
+            ];
+        }
+
+        return response()->json($payload, $process->isSuccessful() ? 200 : 422);
+    }
+
     public function import(Request $request): JsonResponse
     {
         $data = Validator::make($request->all(), [
