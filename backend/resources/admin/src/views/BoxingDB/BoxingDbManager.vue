@@ -79,8 +79,8 @@
             <tr v-for="item in items" :key="item.id">
               <td v-for="(column, columnIndex) in config.columns" :key="column.key">
                 <img
-                  v-if="column.key === 'photo_url' && item.photo_url"
-                  :src="item.photo_url"
+                  v-if="['photo_url', 'poster_url', 'logo_url'].includes(column.key) && item[column.key]"
+                  :src="item[column.key]"
                   alt=""
                   class="h-12 w-12 rounded-lg object-cover ring-1 ring-white/10"
                 >
@@ -343,11 +343,11 @@ const resources = {
     singular: 'Event',
     description: 'Manage fight-night details, posters, broadcasts, venues, promoters, and embedded fight cards.',
     columns: [
+      { key: 'poster_url', label: 'Poster' },
       { key: 'name', label: 'Event' },
       { key: 'status', label: 'Status', badge: true },
       { key: 'event_date', label: 'Date', type: 'date' },
       { key: 'venue.name', label: 'Venue' },
-      { key: 'promoter.name', label: 'Promoter' },
     ],
     fields: [
       field('name', 'Name'), field('slug', 'Slug'), field('subtitle', 'Subtitle'),
