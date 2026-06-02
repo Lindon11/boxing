@@ -133,7 +133,7 @@ class BoxingScraperController extends Controller
     public function syncThesportsdb(): JsonResponse
     {
         $scraperDir = base_path('boxing-scraper');
-        $storageDir = storage_path('app/public/fighters');
+        $storageDir = storage_path('app/public');
         $outputDir = $scraperDir . '/data';
         $script = $scraperDir . '/sync.py';
 
