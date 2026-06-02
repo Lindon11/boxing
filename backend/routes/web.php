@@ -38,9 +38,20 @@ Route::prefix('install')->name('installer.')->middleware('installer')->group(fun
     Route::post('/complete', [InstallerController::class, 'complete'])->name('complete');
 });
 
-// Admin Control Panel SPA (including installer UI)
+// Admin Control Panel SPA
 Route::prefix('admin')->group(function () {
+    // SPA catch-all — serve admin SPA with no-cache headers to prevent stale builds
     Route::get('/{any?}', function () {
-        return file_get_contents(public_path('admin/index.html'));
+        return response(file_get_contents(public_path('admin/index.html')))
+            ->header('Content-Type', 'text/html')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     })->where('any', '.*');
 });
+
+// BoxingDB SPA - public frontend (catch-all)
+Route::get('/{any?}', function () {
+    return response(file_get_contents(resource_path('views/spa.blade.php')))
+        ->header('Content-Type', 'text/html');
+})->where('any', '.*');

@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Return 404 for missing static files under /admin (don't serve SPA HTML)
+    RewriteCond %{REQUEST_URI} ^/admin/assets/.*\.(js|css|png|jpg|svg|ico|woff2?)$
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule .* - [R=404,L]
+
     # Serve SPA for /admin routes (fallback to admin/index.html)
     RewriteCond %{REQUEST_URI} ^/admin
     RewriteCond %{REQUEST_FILENAME} !-f
