@@ -42,3 +42,9 @@ license_private.pem
 # Ignore per-project npm cache used during containerized builds
 frontend/.npm-cache
 .npm-cache
+
+# Python / BoxingDB scraper local environment
+tools/boxingdb_scraper/.venv
+tools/boxingdb_scraper/.venv-linux
+tools/boxingdb_scraper/**/__pycache__
+tools/boxingdb_scraper/**/*.pyc

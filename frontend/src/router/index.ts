@@ -100,7 +100,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/boxing/StaticPage.vue'),
         props: {
           title: 'News',
-          message: 'Editorial feeds can be connected here. The homepage already includes a latest-news placeholder.'
+          message: 'Latest homepage updates are generated from collected event and result data while editorial feeds are being connected.'
         },
         meta: { title: 'News' } satisfies RouteMeta
       },

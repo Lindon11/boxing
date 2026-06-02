@@ -1,10 +1,10 @@
 <template>
-  <div class="mb-4 flex items-center justify-between gap-4">
+  <div class="mb-3 flex items-center justify-between gap-3">
     <div>
-      <p v-if="eyebrow" class="text-xs font-black uppercase tracking-[0.18em] text-red-400">{{ eyebrow }}</p>
-      <h2 class="text-xl font-black text-white md:text-2xl">{{ title }}</h2>
+      <p v-if="eyebrow" class="bd-kicker">{{ eyebrow }}</p>
+      <h2 class="text-base font-black text-white md:text-lg">{{ title }}</h2>
     </div>
-    <RouterLink v-if="to" :to="to" class="text-sm font-bold text-red-400 transition hover:text-red-300">
+    <RouterLink v-if="to" :to="to" class="rounded-lg px-2.5 py-1 text-xs font-black text-red-400 transition hover:bg-red-500/10 hover:text-red-300">
       {{ action || 'View all' }}
     </RouterLink>
   </div>

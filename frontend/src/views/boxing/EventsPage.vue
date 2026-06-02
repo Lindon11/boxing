@@ -1,28 +1,31 @@
 <template>
   <div class="space-y-4">
-    <section class="rounded-lg border border-white/10 bg-white/[0.025] p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <section class="bd-panel p-4 sm:p-5">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.18em] text-red-400">Schedule</p>
-          <h1 class="mt-2 text-3xl font-black text-white">Events</h1>
+          <p class="bd-kicker">Schedule</p>
+          <h1 class="bd-page-title">Events</h1>
+          <p class="mt-3 max-w-xl text-sm leading-6 text-zinc-400">Filter upcoming fight nights, completed cards, and division-specific events.</p>
         </div>
 
-        <div class="grid gap-3 md:grid-cols-3 lg:w-[680px]">
-          <select v-model="filters.status" class="h-11 rounded-lg border border-white/10 bg-zinc-950 px-3 text-sm outline-none focus:border-red-500">
+        <div class="grid gap-3 sm:grid-cols-2 lg:w-[680px] lg:grid-cols-3">
+          <select v-model="filters.status" class="bd-control h-11 text-sm">
             <option value="">All events</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Past results</option>
           </select>
-          <select v-model="filters.weight_class" class="h-11 rounded-lg border border-white/10 bg-zinc-950 px-3 text-sm outline-none focus:border-red-500">
+          <select v-model="filters.weight_class" class="bd-control h-11 text-sm">
             <option value="">All weights</option>
             <option v-for="weight in data?.filters.weight_classes" :key="weight.slug" :value="weight.slug">{{ weight.name }}</option>
           </select>
-          <button class="rounded-lg bg-red-600 px-4 text-sm font-black text-white transition hover:bg-red-500" @click="loadEvents">Apply Filters</button>
+          <button class="bd-button-primary h-11 min-h-0 px-4 sm:col-span-2 lg:col-span-1" @click="loadEvents">Apply Filters</button>
         </div>
       </div>
     </section>
 
-    <LoadingPanel v-if="loading" />
+    <section v-if="loading" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <SkeletonCard v-for="i in 8" :key="i" />
+    </section>
     <ErrorState
       v-else-if="error"
       title="Could not load events"
@@ -43,7 +46,7 @@ import { useRoute, useRouter } from 'vue-router'
 import EmptyState from '@/components/boxing/EmptyState.vue'
 import ErrorState from '@/components/boxing/ErrorState.vue'
 import EventCard from '@/components/boxing/EventCard.vue'
-import LoadingPanel from '@/components/boxing/LoadingPanel.vue'
+import SkeletonCard from '@/components/boxing/SkeletonCard.vue'
 import { boxingApi } from '@/services/boxing'
 import type { BoxingFilters, EventSummary, PaginatedResponse } from '@/types/boxing'
 

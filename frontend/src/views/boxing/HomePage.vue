@@ -1,5 +1,11 @@
 <template>
-  <LoadingPanel v-if="loading" />
+  <div v-if="loading" class="flex h-[calc(100vh-180px)] items-center justify-center">
+    <div class="text-center">
+      <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+      <p class="mt-3 text-xs font-bold uppercase text-zinc-500">Loading</p>
+    </div>
+  </div>
+
   <ErrorState
     v-else-if="error"
     title="Could not load the BoxingDB homepage"
@@ -7,165 +13,228 @@
     :retry="loadHome"
   />
 
-  <div v-else-if="home" class="space-y-4">
-    <section
-      v-if="home.featured_event"
-      class="relative min-h-[520px] overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/30"
-    >
-      <img
-        v-if="home.featured_event.hero_image_url"
-        :src="home.featured_event.hero_image_url"
-        :alt="home.featured_event.name"
-        class="absolute inset-0 h-full w-full object-cover opacity-55"
-      >
-      <div class="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/20" />
-      <div class="relative grid min-h-[520px] gap-6 p-6 md:grid-cols-[1.12fr_0.88fr] md:p-10">
-        <div class="flex max-w-2xl flex-col justify-center">
-          <p class="text-sm font-black uppercase tracking-[0.22em] text-yellow-300">{{ home.featured_event.subtitle }}</p>
-          <h1 class="mt-4 text-5xl font-black uppercase leading-none text-white md:text-7xl">
-            {{ home.featured_event.name }}
+  <div v-else-if="home" class="space-y-4 md:space-y-5">
+    <section class="bd-panel">
+      <div class="grid overflow-hidden lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div class="p-4 sm:p-6 lg:p-8">
+          <p class="bd-kicker">Live Boxing Database</p>
+          <h1 class="mt-2 max-w-3xl text-3xl font-black leading-none text-white sm:text-4xl md:text-5xl">
+            Fighters, fight nights, rankings and titles.
           </h1>
-          <form class="mt-7 max-w-xl" @submit.prevent="submitHeroSearch">
-            <label class="relative block">
-              <SearchIcon class="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-red-400" />
-              <input
-                v-model="heroSearch"
-                class="h-14 w-full rounded-lg border border-white/15 bg-black/45 pl-12 pr-28 text-sm font-bold text-white shadow-2xl shadow-black/30 outline-none backdrop-blur placeholder:text-zinc-500 focus:border-red-500"
-                placeholder="Search fighters, events, titles..."
-                type="search"
-              >
-              <button class="absolute right-1.5 top-1.5 h-11 rounded-lg bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-500" type="submit">
-                Search
-              </button>
-            </label>
-          </form>
-          <div class="mt-6 grid gap-2 text-sm font-medium text-zinc-200">
-            <p class="flex items-center gap-2"><CalendarIcon class="size-4 text-red-400" /> {{ formatDateTime(home.featured_event.event_date) }}</p>
-            <p class="flex items-center gap-2"><MapPinIcon class="size-4 text-red-400" /> {{ venueLine(home.featured_event) }}</p>
-            <p class="flex items-center gap-2"><RadioIcon class="size-4 text-red-400" /> {{ home.featured_event.broadcast_notes || 'Broadcast TBC' }}</p>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base sm:leading-7">
+            Track the names, records, belts, results and broadcast details that shape the modern boxing calendar.
+          </p>
+
+          <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:gap-3">
+            <RouterLink to="/events" class="bd-button-primary bd-focus-ring">
+              <CalendarIcon class="size-4" />
+              Browse Events
+            </RouterLink>
+            <RouterLink to="/fighters" class="bd-button-secondary bd-focus-ring">
+              <FighterIcon class="size-4" />
+              Explore Fighters
+            </RouterLink>
           </div>
-          <div class="mt-7 flex flex-wrap gap-3">
-            <RouterLink
-              :to="`/events/${home.featured_event.slug}`"
-              class="rounded-lg bg-red-600 px-5 py-3 text-sm font-black text-white transition hover:bg-red-500"
-            >
-              View Event Details
-            </RouterLink>
-            <RouterLink
-              :to="`/events/${home.featured_event.slug}/fight-card`"
-              class="rounded-lg border border-white/20 bg-white/[0.04] px-5 py-3 text-sm font-black text-white transition hover:border-red-500/60"
-            >
-              Full Fight Card
-            </RouterLink>
+
+          <div v-if="home.featured_event?.main_fight" class="mt-5 rounded-lg border border-white/10 bg-black/20 p-3 sm:p-4">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <span class="bd-chip bd-chip-red">Featured bout</span>
+              <span class="text-sm font-semibold text-zinc-400">{{ formatDate(home.featured_event.event_date) }}</span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+              <div class="min-w-0">
+                <p class="truncate text-base font-black text-white sm:text-lg">{{ home.featured_event.main_fight.red_corner?.display_name }}</p>
+                <p class="text-sm text-zinc-500">{{ home.featured_event.main_fight.red_corner?.record }}</p>
+              </div>
+              <div class="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-red-600 to-red-900 text-xs font-black text-white bd-vs sm:size-10">
+                VS
+              </div>
+              <div class="min-w-0 sm:text-right">
+                <p class="truncate text-base font-black text-white sm:text-lg">{{ home.featured_event.main_fight.blue_corner?.display_name }}</p>
+                <p class="text-sm text-zinc-500">{{ home.featured_event.main_fight.blue_corner?.record }}</p>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-col gap-2 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+              <span class="inline-flex min-w-0 items-center gap-2">
+                <MapPinIcon class="size-4 shrink-0 text-red-400" />
+                <span class="truncate">{{ venueShort(home.featured_event) }}</span>
+              </span>
+              <RouterLink :to="`/events/${home.featured_event.slug}/fight-card`" class="font-black text-red-300 transition hover:text-red-200">
+                View fight card
+              </RouterLink>
+            </div>
           </div>
         </div>
 
-        <div v-if="home.featured_event.main_fight" class="flex items-center">
-          <div class="w-full rounded-lg border border-white/10 bg-black/55 p-5 shadow-2xl shadow-black/40 backdrop-blur">
-            <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
-              <p class="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Featured Fight</p>
-              <span class="rounded bg-red-600/20 px-2 py-1 text-xs font-black text-red-300">Main Event</span>
-            </div>
-            <div class="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-              <FighterMini :fighter="home.featured_event.main_fight.red_corner" />
-              <span class="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xl font-black text-red-500">VS</span>
-              <FighterMini :fighter="home.featured_event.main_fight.blue_corner" align="right" />
-            </div>
+        <RouterLink
+          v-if="home.featured_event"
+          :to="`/events/${home.featured_event.slug}`"
+          class="group relative min-h-72 overflow-hidden border-t border-white/10 bg-[#111827] lg:border-l lg:border-t-0"
+        >
+          <img
+            v-if="home.featured_event.poster_url || home.featured_event.hero_image_url"
+            :src="home.featured_event.poster_url || home.featured_event.hero_image_url || ''"
+            :alt="home.featured_event.name"
+            class="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-300 group-hover:scale-105 group-hover:opacity-95"
+          >
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent" />
+          <div class="absolute inset-x-0 bottom-0 p-5">
+            <span class="bd-chip bd-chip-gold">{{ home.featured_event.status }}</span>
+            <p class="mt-3 text-2xl font-black leading-tight text-white">{{ home.featured_event.name }}</p>
+            <p class="mt-1 text-sm text-zinc-300">{{ home.featured_event.subtitle || home.featured_event.broadcast_notes || 'Event details available' }}</p>
           </div>
-        </div>
+        </RouterLink>
       </div>
     </section>
 
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(380px,0.6fr)]">
-      <section class="rounded-lg border border-white/10 bg-[#070c12] p-4 shadow-xl shadow-black/10">
-        <SectionHeader title="Upcoming Events" to="/events" />
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <EventCard v-for="event in home.upcoming_events" :key="event.slug" :event="event" />
-        </div>
-      </section>
+    <section class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <StatTile v-for="tile in statTiles" :key="tile.label" :icon="tile.icon" :label="tile.label" :value="tile.value" />
+    </section>
 
-      <section class="rounded-lg border border-white/10 bg-[#070c12] p-4 shadow-xl shadow-black/10">
-        <SectionHeader title="Latest News" action="View all news" to="/news" />
-        <div class="divide-y divide-white/10">
-          <article v-for="item in home.news" :key="item.title" class="py-4 first:pt-0 last:pb-0">
-            <p class="font-bold text-white">{{ item.title }}</p>
-            <p class="mt-1 text-sm text-zinc-500">{{ item.timestamp }}</p>
-          </article>
+    <section v-if="home.upcoming_events?.length" class="bd-panel p-4 sm:p-5">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="bd-kicker">Calendar</p>
+          <h2 class="text-xl font-black text-white">Upcoming Events</h2>
         </div>
-      </section>
-    </div>
+        <RouterLink to="/events" class="text-sm font-black text-red-300 transition hover:text-red-200">View all</RouterLink>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <RouterLink
+          v-for="ev in home.upcoming_events.slice(0, 4)"
+          :key="ev.slug"
+          :to="`/events/${ev.slug}`"
+          class="bd-card-hover rounded-lg border border-white/10 bg-white/[0.035] p-4"
+        >
+          <p class="text-sm font-black text-white">{{ ev.name }}</p>
+          <div class="mt-3 flex items-center gap-2 text-sm text-zinc-400">
+            <CalendarIcon class="size-4 text-red-400" />
+            <span>{{ formatDate(ev.event_date) }}</span>
+          </div>
+          <p class="mt-1 truncate text-sm text-zinc-500">{{ venueShort(ev) }}</p>
+        </RouterLink>
+      </div>
+    </section>
 
-    <div class="grid gap-4 xl:grid-cols-2">
-      <section class="rounded-lg border border-white/10 bg-[#070c12] p-4 shadow-xl shadow-black/10">
-        <SectionHeader title="Rankings" to="/rankings" />
-        <div class="overflow-hidden rounded-lg border border-white/10">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-white/[0.04] text-xs uppercase text-zinc-500">
-              <tr>
-                <th class="px-4 py-3">#</th>
-                <th class="px-4 py-3">Fighter</th>
-                <th class="px-4 py-3">Record</th>
-                <th class="px-4 py-3 text-right">Points</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/10">
-              <tr v-for="ranking in home.rankings" :key="ranking.fighter?.slug" class="text-zinc-200">
-                <td class="px-4 py-3 font-black text-zinc-500">{{ ranking.rank }}</td>
-                <td class="px-4 py-3">
-                  <RouterLink v-if="ranking.fighter" :to="`/fighters/${ranking.fighter.slug}`" class="font-bold text-white hover:text-red-400">
-                    {{ ranking.fighter.country?.code }} {{ ranking.fighter.display_name }}
-                  </RouterLink>
-                </td>
-                <td class="px-4 py-3">{{ ranking.fighter?.record }}</td>
-                <td class="px-4 py-3 text-right">{{ ranking.points }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div class="grid gap-4 lg:grid-cols-2">
+        <section class="bd-panel p-4 sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p class="bd-kicker">Form Guide</p>
+              <h2 class="text-xl font-black text-white">Rankings</h2>
+            </div>
+            <RouterLink to="/rankings" class="text-sm font-black text-red-300 transition hover:text-red-200">View all</RouterLink>
+          </div>
 
-      <section class="rounded-lg border border-white/10 bg-[#070c12] p-4 shadow-xl shadow-black/10">
-        <SectionHeader title="Recent Results" to="/events?status=completed" />
-        <div class="space-y-3">
-          <RouterLink
-            v-for="fight in home.latest_results"
-            :key="fight.id"
-            :to="fight.event ? `/events/${fight.event.slug}` : '/events'"
-            class="grid grid-cols-[auto_1fr_auto] gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-3 transition hover:border-red-500/50"
-          >
-            <span class="text-sm font-black text-zinc-500">{{ fight.bout_order }}</span>
-            <span>
-              <span class="block font-bold text-white">{{ fight.red_corner?.display_name }} vs {{ fight.blue_corner?.display_name }}</span>
-              <span class="text-sm text-zinc-400">{{ fight.result_notes || fight.result_method?.name || 'Result pending' }}</span>
-            </span>
-            <span class="text-right text-xs font-bold uppercase text-zinc-500">{{ formatDate(fight.fight_date) }}</span>
-          </RouterLink>
-        </div>
-      </section>
-    </div>
+          <div class="space-y-2 sm:hidden">
+            <RouterLink
+              v-for="r in home.rankings.slice(0, 8)"
+              :key="r.rank"
+              :to="r.fighter ? `/fighters/${r.fighter.slug}` : '/rankings'"
+              class="flex items-center gap-3 rounded-lg border border-white/10 bg-black/15 p-3"
+            >
+              <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] font-black text-zinc-300">{{ r.rank }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-black text-white">{{ r.fighter?.display_name || 'TBC' }}</span>
+                <span class="text-sm text-zinc-500">{{ r.fighter?.record || '-' }}</span>
+              </span>
+              <span class="text-sm font-black text-white">{{ r.points }}</span>
+            </RouterLink>
+          </div>
 
-    <div class="grid gap-4 xl:grid-cols-[1fr_1fr]">
-      <section class="rounded-lg border border-white/10 bg-[#070c12] p-4 shadow-xl shadow-black/10">
-        <SectionHeader title="Upcoming Broadcasts" to="/watch" />
-        <div class="space-y-3">
-          <RouterLink
-            v-for="item in home.broadcasts"
-            :key="`${item.event.slug}-${item.broadcast.broadcaster}`"
-            :to="`/events/${item.event.slug}`"
-            class="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/[0.035] p-4 transition hover:border-red-500/50"
-          >
-            <span>
-              <span class="block font-bold text-white">{{ item.event.name }}</span>
-              <span class="text-sm text-zinc-400">{{ formatDate(item.event.event_date) }} - {{ item.broadcast.broadcaster }}</span>
-            </span>
-            <span class="rounded bg-white/[0.06] px-3 py-1 text-xs font-black text-zinc-300">{{ item.broadcast.platform }}</span>
-          </RouterLink>
-        </div>
-      </section>
+          <div class="hidden overflow-x-auto sm:block">
+            <table class="bd-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Fighter</th>
+                  <th>Record</th>
+                  <th class="text-right">Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in home.rankings.slice(0, 10)" :key="r.rank">
+                  <td class="font-black text-zinc-500">{{ r.rank }}</td>
+                  <td>
+                    <RouterLink v-if="r.fighter" :to="`/fighters/${r.fighter.slug}`" class="font-black text-white hover:text-red-300">
+                      {{ r.fighter.display_name }}
+                    </RouterLink>
+                  </td>
+                  <td class="text-zinc-500">{{ r.fighter?.record }}</td>
+                  <td class="text-right font-black text-white">{{ r.points }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <StatTile v-for="tile in statTiles" :key="tile.label" :icon="tile.icon" :label="tile.label" :value="tile.value" />
-      </section>
+        <section class="bd-panel p-4 sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p class="bd-kicker">Scorecards</p>
+              <h2 class="text-xl font-black text-white">Latest Results</h2>
+            </div>
+            <RouterLink to="/events?status=completed" class="text-sm font-black text-red-300 transition hover:text-red-200">View all</RouterLink>
+          </div>
+
+          <div class="space-y-2">
+            <RouterLink
+              v-for="fight in home.latest_results.slice(0, 8)"
+              :key="fight.id"
+              :to="fight.event ? `/events/${fight.event.slug}` : '/events'"
+              class="bd-card-hover flex items-center gap-3 rounded-lg border border-white/10 bg-black/15 p-3"
+            >
+              <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-sm font-black text-zinc-400">{{ fight.bout_order }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-black text-white">
+                  {{ fight.red_corner?.display_name }} <span class="text-zinc-600">vs</span> {{ fight.blue_corner?.display_name }}
+                </span>
+                <span class="text-sm text-zinc-500">{{ fight.result_method?.abbreviation || fight.status }} - {{ formatDate(fight.fight_date) }}</span>
+              </span>
+            </RouterLink>
+          </div>
+        </section>
+      </div>
+
+      <aside class="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+        <section class="bd-panel p-4 sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p class="bd-kicker">Updates</p>
+              <h2 class="text-xl font-black text-white">News</h2>
+            </div>
+            <RouterLink to="/news" class="text-sm font-black text-red-300 transition hover:text-red-200">View all</RouterLink>
+          </div>
+          <div class="space-y-2">
+            <article v-for="item in home.news.slice(0, 6)" :key="item.title" class="rounded-lg border border-white/10 bg-black/15 p-3">
+              <p class="font-black leading-snug text-white">{{ item.title }}</p>
+              <p class="mt-1 text-sm text-zinc-500">{{ item.timestamp }}</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="bd-panel p-4 sm:p-5">
+          <div class="mb-4">
+            <p class="bd-kicker">Viewing</p>
+            <h2 class="text-xl font-black text-white">Broadcasts</h2>
+          </div>
+          <div class="space-y-2">
+            <RouterLink
+              v-for="item in home.broadcasts.slice(0, 6)"
+              :key="`${item.event.slug}-${item.broadcast.broadcaster}`"
+              :to="`/events/${item.event.slug}`"
+              class="bd-card-hover flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/15 p-3"
+            >
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-black text-white">{{ item.event.name }}</span>
+                <span class="text-sm text-zinc-500">{{ item.broadcast.broadcaster }}</span>
+              </span>
+              <span class="bd-chip">{{ item.broadcast.platform || 'TV' }}</span>
+            </RouterLink>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 
@@ -173,64 +242,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import {
   CalendarDays as CalendarIcon,
   Dumbbell as FighterIcon,
   MapPin as MapPinIcon,
-  Radio as RadioIcon,
   Shield as PromoterIcon,
   Swords as FightIcon,
   Trophy as TrophyIcon,
   Map as VenueIcon,
-  Search as SearchIcon,
 } from '@lucide/vue'
 import EmptyState from '@/components/boxing/EmptyState.vue'
 import ErrorState from '@/components/boxing/ErrorState.vue'
-import EventCard from '@/components/boxing/EventCard.vue'
-import LoadingPanel from '@/components/boxing/LoadingPanel.vue'
-import SectionHeader from '@/components/boxing/SectionHeader.vue'
 import StatTile from '@/components/boxing/StatTile.vue'
 import { boxingApi } from '@/services/boxing'
-import type { EventSummary, FighterSummary, HomeResponse } from '@/types/boxing'
-import { formatDate, formatDateTime, formatNumber } from '@/utils/boxing-format'
+import type { EventSummary, HomeResponse } from '@/types/boxing'
+import { formatDate, formatNumber } from '@/utils/boxing-format'
 
 const home = ref<HomeResponse | null>(null)
 const loading = ref(true)
 const error = ref('')
-const heroSearch = ref('')
-const router = useRouter()
-
-const FighterMini = defineComponent({
-  props: {
-    fighter: {
-      type: Object as () => FighterSummary | null,
-      default: null,
-    },
-    align: {
-      type: String,
-      default: 'left',
-    },
-  },
-  setup(props) {
-    return () => h('div', { class: props.align === 'right' ? 'text-right' : '' }, [
-      props.fighter?.photo_url
-        ? h('img', {
-          src: props.fighter.photo_url,
-          alt: props.fighter.display_name,
-          class: `mb-3 inline-block h-28 w-28 rounded-lg object-cover ${props.align === 'right' ? 'ml-auto' : ''}`,
-        })
-        : null,
-      h('p', { class: 'text-lg font-black text-white' }, props.fighter?.display_name || 'TBC'),
-      h('p', { class: 'text-sm text-zinc-400' }, props.fighter ? `${props.fighter.record} (${props.fighter.knockouts} KO)` : ''),
-    ])
-  },
-})
 
 const statTiles = computed(() => {
   const stats = home.value?.stats || {}
-
   return [
     { label: 'Fighters', value: formatNumber(stats.fighters), icon: FighterIcon },
     { label: 'Events', value: formatNumber(stats.events), icon: CalendarIcon },
@@ -241,19 +276,14 @@ const statTiles = computed(() => {
   ]
 })
 
-function venueLine(event: EventSummary) {
-  if (!event.venue) return 'Venue TBC'
-  return [event.venue.name, event.venue.city, event.venue.country].filter(Boolean).join(', ')
-}
-
-function submitHeroSearch() {
-  router.push({ path: '/search', query: heroSearch.value ? { q: heroSearch.value } : {} })
+function venueShort(event: EventSummary) {
+  if (!event.venue) return 'TBC'
+  return [event.venue.city, event.venue.country].filter(Boolean).join(', ')
 }
 
 async function loadHome() {
   loading.value = true
   error.value = ''
-
   try {
     home.value = await boxingApi.home()
   } catch {

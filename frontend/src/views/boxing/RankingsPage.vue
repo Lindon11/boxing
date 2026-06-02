@@ -1,24 +1,27 @@
 <template>
   <div class="space-y-4">
-    <section class="rounded-lg border border-white/10 bg-white/[0.025] p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <section class="bd-panel p-4 sm:p-5">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p class="text-xs font-black uppercase tracking-[0.18em] text-red-400">Sanctioning bodies</p>
-          <h1 class="mt-2 text-3xl font-black text-white">Rankings</h1>
+          <p class="bd-kicker">Sanctioning bodies</p>
+          <h1 class="bd-page-title">Rankings</h1>
+          <p class="mt-3 max-w-xl text-sm leading-6 text-zinc-400">Compare fighters by organisation, division, points and current rank.</p>
         </div>
 
-        <div class="grid gap-3 md:grid-cols-2 lg:w-[520px]">
-          <select v-model="filters.organisation" class="h-11 rounded-lg border border-white/10 bg-zinc-950 px-3 text-sm outline-none focus:border-red-500">
+        <div class="grid gap-3 sm:grid-cols-2 lg:w-[520px]">
+          <select v-model="filters.organisation" class="bd-control h-11 text-sm">
             <option v-for="org in data?.filters.organisations" :key="org.slug" :value="org.slug">{{ org.abbreviation }}</option>
           </select>
-          <select v-model="filters.weight_class" class="h-11 rounded-lg border border-white/10 bg-zinc-950 px-3 text-sm outline-none focus:border-red-500">
+          <select v-model="filters.weight_class" class="bd-control h-11 text-sm">
             <option v-for="weight in data?.filters.weight_classes" :key="weight.slug" :value="weight.slug">{{ weight.name }}</option>
           </select>
         </div>
       </div>
     </section>
 
-    <LoadingPanel v-if="loading" />
+    <section v-if="loading" class="bd-panel">
+      <SkeletonTable :cols="5" :rows="10" />
+    </section>
     <ErrorState
       v-else-if="error"
       title="Could not load rankings"
@@ -27,9 +30,9 @@
     />
     <EmptyState v-else-if="!data?.rankings.length" title="No rankings found" message="Try a different organisation or weight class." />
 
-    <section v-else class="overflow-hidden rounded-lg border border-white/10 bg-white/[0.025]">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-white/[0.04] text-xs uppercase text-zinc-500">
+    <section v-else class="bd-panel overflow-x-auto bd-fade-in">
+      <table class="bd-table">
+        <thead>
           <tr>
             <th class="px-4 py-3">#</th>
             <th class="px-4 py-3">Fighter</th>
@@ -62,7 +65,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import EmptyState from '@/components/boxing/EmptyState.vue'
 import ErrorState from '@/components/boxing/ErrorState.vue'
-import LoadingPanel from '@/components/boxing/LoadingPanel.vue'
+import SkeletonTable from '@/components/boxing/SkeletonTable.vue'
 import { boxingApi } from '@/services/boxing'
 import type { BoxingFilters, RankingSummary } from '@/types/boxing'
 

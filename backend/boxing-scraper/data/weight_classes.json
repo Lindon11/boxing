@@ -1,0 +1,19 @@
+[
+  "WeightClass(name='Minimumweight', slug='minimumweight', min_weight_kg=0, max_weight_kg=47.627, order=1)",
+  "WeightClass(name='Light Flyweight', slug='light-flyweight', min_weight_kg=47.627, max_weight_kg=48.988, order=2)",
+  "WeightClass(name='Flyweight', slug='flyweight', min_weight_kg=48.988, max_weight_kg=50.802, order=3)",
+  "WeightClass(name='Super Flyweight', slug='super-flyweight', min_weight_kg=50.802, max_weight_kg=52.163, order=4)",
+  "WeightClass(name='Bantamweight', slug='bantamweight', min_weight_kg=52.163, max_weight_kg=53.525, order=5)",
+  "WeightClass(name='Super Bantamweight', slug='super-bantamweight', min_weight_kg=53.525, max_weight_kg=55.338, order=6)",
+  "WeightClass(name='Featherweight', slug='featherweight', min_weight_kg=55.338, max_weight_kg=57.153, order=7)",
+  "WeightClass(name='Super Featherweight', slug='super-featherweight', min_weight_kg=57.153, max_weight_kg=58.967, order=8)",
+  "WeightClass(name='Lightweight', slug='lightweight', min_weight_kg=58.967, max_weight_kg=61.235, order=9)",
+  "WeightClass(name='Super Lightweight', slug='super-lightweight', min_weight_kg=61.235, max_weight_kg=63.503, order=10)",
+  "WeightClass(name='Welterweight', slug='welterweight', min_weight_kg=63.503, max_weight_kg=66.678, order=11)",
+  "WeightClass(name='Super Welterweight', slug='super-welterweight', min_weight_kg=66.678, max_weight_kg=69.853, order=12)",
+  "WeightClass(name='Middleweight', slug='middleweight', min_weight_kg=69.853, max_weight_kg=72.574, order=13)",
+  "WeightClass(name='Super Middleweight', slug='super-middleweight', min_weight_kg=72.574, max_weight_kg=76.363, order=14)",
+  "WeightClass(name='Light Heavyweight', slug='light-heavyweight', min_weight_kg=76.363, max_weight_kg=79.378, order=15)",
+  "WeightClass(name='Cruiserweight', slug='cruiserweight', min_weight_kg=79.378, max_weight_kg=90.719, order=16)",
+  "WeightClass(name='Heavyweight', slug='heavyweight', min_weight_kg=90.719, max_weight_kg=999, order=17)"
+]
