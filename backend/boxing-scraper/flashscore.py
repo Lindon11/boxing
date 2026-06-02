@@ -22,6 +22,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -265,20 +266,59 @@ def scrape_fighter(browser: BrowserManager, slug: str, pid: str) -> tuple[Fighte
 
 
 def search_player(browser, query):
-    """Search Flashscore for a player. Returns list of {name, slug, id}."""
-    browser.get(f"{BASE}/search/?q={requests.utils.quote(query)}")
-    time.sleep(5)
+    """Search Flashscore for a player via the search overlay. Returns list of {name, slug, id}."""
+    browser.get(f"{BASE}/")
+    time.sleep(3)
+
+    # Open search overlay
     try:
-        browser.find("a[href*='/player/']")
-    except:
-        pass
-    results = []
-    for link in browser.find_all("a[href*='/player/']"):
-        href = link.get_attribute("href") or ""
-        m = re.search(r"/player/([^/]+)/([^/?#]+)", href)
-        if m:
-            results.append({"name": link.text.strip() or query, "slug": m.group(1), "id": m.group(2), "url": href})
-    return results
+        browser.driver.execute_script("""
+            document.querySelector('[data-testid="wcl-icon-action-icon-search"]').parentElement.click();
+        """)
+        time.sleep(2)
+        inp = browser.find("input.searchInput__input")
+        inp.send_keys(query)
+        time.sleep(5)
+    except Exception as e:
+        print(f"  Search overlay error: {e}")
+        return []
+
+    # Get all search result names
+    names = browser.find_all("div.searchResult__participantName")
+    preliminary = []
+    for n in names:
+        text = n.text.strip()
+        try:
+            parent = n.find_element(By.XPATH, "./ancestor::a")
+            href = parent.get_attribute("href") or ""
+        except:
+            href = ""
+        preliminary.append({"name": text, "url": href})
+
+    # Try clicking first boxing match to resolve the URL
+    for name_el in names:
+        try:
+            cat_el = name_el.find_element(By.XPATH, "./following-sibling::div[contains(@class,'searchResult__participantCategory')]")
+            if "boxing" not in cat_el.text.lower():
+                continue
+        except:
+            continue
+        try:
+            parent = name_el.find_element(By.XPATH, "./ancestor::a")
+            browser.driver.execute_script("arguments[0].click();", parent)
+            time.sleep(4)
+            current = browser.driver.current_url
+            m = re.search(r"/player/([^/]+)/([^/?#]+)", current)
+            if m:
+                for item in preliminary:
+                    item["slug"] = m.group(1)
+                    item["id"] = m.group(2)
+                    item["resolved_url"] = current
+            break
+        except:
+            continue
+
+    return preliminary
 
 
 def main():
@@ -306,7 +346,9 @@ def main():
             results = search_player(browser, args.search)
             print(f"\nFound {len(results)} player(s):")
             for r in results:
-                print(f"  {r['name']:40s} slug={r['slug']:30s} id={r['id']}")
+                slug = r.get('slug', '?')
+            pid = r.get('id', '?')
+            print(f"  {r['name']:40s} slug={slug:30s} id={pid}")
 
         if args.player:
             slug, pid = args.player
