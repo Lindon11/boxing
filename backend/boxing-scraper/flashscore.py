@@ -8,7 +8,7 @@ Usage:
     python3 flashscore.py --file fighters.json --output data/
 """
 
-import argparse, json, os, re, sys, time
+import argparse, json, os, re, sys, time, requests
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from typing import Optional
@@ -120,6 +120,35 @@ def extract_opponent_id(match_url: str, fighter_slug: str) -> str:
     return ""
 
 
+def search_player(browser: BrowserManager, query: str) -> list[dict]:
+    """Search for a fighter on Flashscore and return matches with their IDs."""
+    url = f"{BASE}/search/?q={requests.utils.quote(query)}"
+    browser.get(url)
+    time.sleep(4)
+
+    try:
+        WebDriverWait(browser.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='/player/']"))
+        )
+    except TimeoutException:
+        pass
+
+    results = []
+    for link in browser.find_all("a[href*='/player/']"):
+        href = link.get_attribute("href") or ""
+        name = link.text.strip()
+        # Extract slug and ID from URL: /player/{slug}/{id}/
+        match = re.search(r"/player/([^/]+)/([^/?#]+)", href)
+        if match:
+            results.append({
+                "name": name or query,
+                "slug": match.group(1),
+                "id": match.group(2),
+                "url": href,
+            })
+    return results
+
+
 def scrape_player(browser: BrowserManager, player_slug: str, player_id: str, player_name: str = "") -> list[FightResult]:
     url = f"{BASE}/player/{player_slug}/{player_id}/results/"
     print(f"  Scraping: {url}")
@@ -204,23 +233,33 @@ def main():
     parser = argparse.ArgumentParser(description="Flashscore Boxing Scraper")
     parser.add_argument("--player", nargs=2, metavar=("SLUG", "ID"),
                         help="Player slug and Flashscore ID (e.g. usyk-olexandr nqbF7L5K)")
+    parser.add_argument("--search", metavar="NAME", help="Search for a fighter by name")
     parser.add_argument("--file", help="JSON file with fighters containing flashscore_id fields")
     parser.add_argument("--output", default="data/", help="Output directory")
     parser.add_argument("--no-headless", action="store_true", help="Show browser window")
     args = parser.parse_args()
 
-    if not args.player and not args.file:
+    if not args.player and not args.file and not args.search:
         parser.print_help()
         sys.exit(1)
 
     os.makedirs(args.output, exist_ok=True)
-
     all_fights = []
-
     browser = BrowserManager(headless=not args.no_headless)
     browser.start()
 
     try:
+        if args.search:
+            results = search_player(browser, args.search)
+            print(f"\nFound {len(results)} player(s) for '{args.search}':")
+            for r in results:
+                print(f"  {r['name']:40s} | slug={r['slug']:30s} id={r['id']}")
+            if results:
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                p = os.path.join(args.output, f"search_{ts}.json")
+                json.dump(results, open(p, "w"), indent=2)
+                print(f"Saved to {p}")
+
         if args.player:
             slug, pid = args.player
             fights = scrape_player(browser, slug, pid, slug)
@@ -241,18 +280,17 @@ def main():
     finally:
         browser.close()
 
-    # Save
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = os.path.join(args.output, f"flashscore_results_{ts}.json")
-    with open(path, "w") as f:
-        json.dump([asdict(fi) for fi in all_fights], f, indent=2)
-
-    print(f"\nTotal: {len(all_fights)} fights saved to {path}")
-    total_w = sum(1 for f in all_fights if f.result == "W")
-    total_l = sum(1 for f in all_fights if f.result == "L")
-    total_d = sum(1 for f in all_fights if f.result == "D")
-    total_ko = sum(1 for f in all_fights if "KO" in f.method or "TKO" in f.method)
-    print(f"Record: {total_w}-{total_l}-{total_d} ({total_ko} KO)")
+    if all_fights:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        path = os.path.join(args.output, f"flashscore_results_{ts}.json")
+        with open(path, "w") as f:
+            json.dump([asdict(fi) for fi in all_fights], f, indent=2)
+        print(f"\nTotal: {len(all_fights)} fights saved to {path}")
+        total_w = sum(1 for f in all_fights if f.result == "W")
+        total_l = sum(1 for f in all_fights if f.result == "L")
+        total_d = sum(1 for f in all_fights if f.result == "D")
+        total_ko = sum(1 for f in all_fights if "KO" in f.method or "TKO" in f.method)
+        print(f"Record: {total_w}-{total_l}-{total_d} ({total_ko} KO)")
 
 
 if __name__ == "__main__":
