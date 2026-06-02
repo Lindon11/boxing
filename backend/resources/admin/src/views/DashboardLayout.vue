@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  <div class="min-h-screen bg-[#06080d]">
     <!-- Mobile Menu Overlay -->
     <Transition name="fade">
       <div v-if="mobileMenuOpen" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" @click="closeMobileMenu" />
@@ -8,19 +8,19 @@
     <aside
       :class="[
         'fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300 ease-out',
-        'bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50',
+        'bg-[#080d14]/96 backdrop-blur-xl border-r border-slate-800',
         sidebarCollapsed ? 'w-20' : 'w-72',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       ]"
     >
       <!-- Logo -->
-      <div class="flex items-center justify-between px-6 border-b border-slate-700/50 h-[73px]">
+      <div class="flex items-center justify-between px-6 border-b border-slate-800 h-[73px]">
         <div class="flex items-center gap-3 h-full">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <BoltIcon class="w-6 h-6 text-white" />
+          <div class="w-10 h-10 rounded-lg border border-red-500/35 bg-red-600/15 flex items-center justify-center shadow-lg shadow-red-950/30">
+            <TrophyIcon class="w-6 h-6 text-red-300" />
           </div>
           <Transition name="fade">
-            <span v-if="!sidebarCollapsed" class="text-xl font-bold text-white">LaravelCP</span>
+            <span v-if="!sidebarCollapsed" class="text-xl font-black text-white">Boxing<span class="text-red-500">DB</span></span>
           </Transition>
         </div>
         <button
@@ -38,8 +38,8 @@
             :class="[
               'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
               isMenuOpen(section.id)
-                ? 'text-white bg-slate-800/50'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
+                ? 'text-white bg-slate-800/55'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/35'
             ]"
           >
             <component :is="section.iconComponent" class="w-5 h-5 flex-shrink-0" />
@@ -58,7 +58,7 @@
                 :class="[
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
                   route.path === item.path
-                    ? 'text-amber-400 bg-amber-500/10'
+                    ? 'text-white bg-red-600/18 border border-red-500/24'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
                 ]"
                 @click="closeMobileMenu"
@@ -71,7 +71,7 @@
         </div>
       </nav>
       <!-- User / Logout -->
-      <div class="p-3 border-t border-slate-700/50">
+      <div class="p-3 border-t border-slate-800">
         <button
           @click="logout"
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
@@ -90,7 +90,7 @@
       ]"
     >
       <!-- Header -->
-      <header class="sticky top-0 z-30 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
+      <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#080d14]/86 border-b border-slate-800">
         <div class="flex items-center justify-between px-4 sm:px-6 h-[73px]">
           <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             <button
@@ -128,14 +128,14 @@
                   @blur="setTimeout(() => showSearchResults = false, 200)"
                   type="text"
                   placeholder="Search pages..."
-                  class="w-64 pl-10 pr-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
+                  class="w-64 pl-10 pr-4 py-2 rounded-lg bg-slate-950/55 border border-slate-700/70 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500/60 transition-all"
                 />
 
                 <!-- Search Results Dropdown -->
                 <Transition name="dropdown">
                   <div
                     v-if="showSearchResults && searchResults.length > 0"
-                    class="absolute top-full left-0 right-0 mt-2 rounded-xl bg-slate-800 border border-slate-700/50 shadow-xl shadow-black/20 overflow-hidden z-50"
+                    class="absolute top-full left-0 right-0 mt-2 rounded-xl bg-slate-900 border border-slate-700/70 shadow-xl shadow-black/20 overflow-hidden z-50"
                   >
                     <div class="max-h-80 overflow-y-auto">
                       <button
@@ -144,7 +144,7 @@
                         @mousedown.prevent="navigateToResult(result.path)"
                         class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700/50 transition-colors text-left"
                       >
-                        <component :is="result.iconComponent" class="w-5 h-5 text-amber-400" />
+                        <component :is="result.iconComponent" class="w-5 h-5 text-red-400" />
                         <div>
                           <p class="text-sm font-medium text-white">{{ result.label }}</p>
                           <p class="text-xs text-slate-400">{{ result.section }}</p>
@@ -172,7 +172,7 @@
                   <p class="text-sm font-medium text-white">{{ user?.username || 'Admin' }}</p>
                   <p class="text-xs text-slate-400">Administrator</p>
                 </div>
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold shadow-lg shadow-amber-500/20">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold shadow-lg shadow-red-950/30">
                   {{ (user?.username || 'A').charAt(0).toUpperCase() }}
                 </div>
                 <ChevronDownIcon class="w-4 h-4 text-slate-400 hidden md:block" />
@@ -506,11 +506,11 @@ const navigateToResult = (path) => {
 }
 
 .nav-link-active {
-  @apply text-white bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30;
+  @apply text-white bg-red-600/15 border border-red-500/30;
 }
 
 .nav-link-active .nav-icon {
-  @apply text-amber-400;
+  @apply text-red-400;
 }
 
 .nav-icon {

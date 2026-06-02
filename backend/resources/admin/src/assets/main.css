@@ -10,7 +10,9 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background:
+    linear-gradient(110deg, rgba(127, 29, 29, 0.18), rgba(2, 6, 23, 0) 34rem),
+    linear-gradient(180deg, #06080d 0%, #0b111b 48%, #05070b 100%);
   background-attachment: fixed;
   color: #e2e8f0;
   line-height: 1.6;
@@ -28,7 +30,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #0b111b;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -39,6 +41,98 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+.admin-panel {
+  border: 1px solid rgb(51 65 85 / 0.74);
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, rgb(15 23 42 / 0.94), rgb(2 6 23 / 0.9));
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.24);
+}
+
+.admin-control {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(51 65 85 / 0.9);
+  background: rgb(2 6 23 / 0.78);
+  color: white;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.admin-control:focus {
+  border-color: rgb(239 68 68 / 0.78);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.16);
+}
+
+.admin-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  background: rgb(220 38 38);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 16px 36px rgb(127 29 29 / 0.3);
+  transition: background 160ms ease, opacity 160ms ease;
+}
+
+.admin-primary:hover {
+  background: rgb(239 68 68);
+}
+
+.admin-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(71 85 105 / 0.85);
+  color: rgb(226 232 240);
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.admin-secondary:hover {
+  border-color: rgb(239 68 68 / 0.55);
+  background: rgb(239 68 68 / 0.08);
+  color: white;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-table thead {
+  background: rgb(2 6 23 / 0.72);
+}
+
+.admin-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(148 163 184);
+}
+
+.admin-table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  font-size: 0.875rem;
+  color: rgb(203 213 225);
+}
+
+.admin-table tbody tr {
+  border-top: 1px solid rgb(51 65 85 / 0.58);
+  transition: background 140ms ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgb(30 41 59 / 0.42);
+}
+
 /* Global Responsive Utilities */
 
 /* Make tables scroll horizontally on mobile */
@@ -55,13 +149,6 @@ body {
     flex-direction: column !important;
   }
 
-  /* Full width buttons on mobile */
-  button,
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
   /* Smaller text inputs on mobile */
   input[type="text"],
   input[type="email"],
@@ -73,8 +160,6 @@ body {
     max-width: 100%;
   }
 
-  /* Card grids become single column */
-  .grid,
   .card-grid {
     grid-template-columns: 1fr !important;
   }
@@ -93,7 +178,7 @@ body {
 
 /* Tablet breakpoint */
 @media (max-width: 1024px) and (min-width: 769px) {
-  .grid {
+  .card-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
